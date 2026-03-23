@@ -25,7 +25,7 @@ class StateMachine:
         self.turtle = turtle
 
         # --- State Management ---
-        self.state: str = "LEAVE_GARAGE"
+        self.state: str = "SCAN_GARAGE"
         self.next_state: str = ""
         self.target_object: str = "ball"  # Goals: "ball", "garage"
         self.crash_detected: bool = False
@@ -33,7 +33,7 @@ class StateMachine:
 
         # --- Target & Control Parameters
         self.ball_target_dist: float = 0.6
-        self.kp_approach: float = 0.004#0.003
+        self.kp_approach: float = 0.003#0.003
         self.last_center_x: int = 0
 
         # --- Odometry & Navigation Tracks
@@ -309,6 +309,7 @@ class StateMachine:
     def state_search(self) -> Tuple[float, float]:
         """SEARCH:
         Search for the current target by spinning in place.
+        When detected, center the target before approaching.
 
         Returns:
             Tuple[float, float]: Velocities (linear, angular).
@@ -318,16 +319,34 @@ class StateMachine:
         self.use_camera = True
         self.use_pointcloud = False
 
-        if self.last_center_x < (WIDTH / 2):
-            angular_vel = 0.35
+        # 1. Pokud cíl nevidíme, točíme se a hledáme ho
+        if not self.target_detected:
+            # Točíme se na tu stranu, kde jsme cíl viděli naposledy
+            if self.last_center_x < (WIDTH / 2):
+                angular_vel = 0.35
+            else:
+                angular_vel = -0.35
+            return 0.0, angular_vel
+
+        # 2. Pokud cíl vidíme, vycentrujeme ho
         else:
-            angular_vel = -0.35
-
-        if self.target_detected:
-            self.state = "APPROACH"
-            return 0.0, 0.0
-
-        return 0.0, angular_vel
+            # Odchylka od středu obrazovky (v pixelech)
+            error = (WIDTH / 2) - self.center_x
+            
+            # Pokud je cíl dostatečně blízko středu (tolerance např. 20 pixelů)
+            if abs(error) < 20:
+                print("[SEARCH] Cíl vycentrován! Přecházím na APPROACH.")
+                self.state = "APPROACH"
+                return 0.0, 0.0
+            
+            # Plynulé dotočení na střed pomocí P-regulátoru (stejný jako v APPROACH)
+            angular_vel = float(np.clip(self.kp_approach * error, -0.35, 0.35))
+            
+            # Ochrana proti uvíznutí na tření při velmi malé odchylce
+            if 0 < angular_vel < 0.15: angular_vel = 0.15
+            if 0 > angular_vel > -0.15: angular_vel = -0.15
+                
+            return 0.0, angular_vel
 
     def state_approach(self) -> Tuple[float, float]:
         """APPROACH:
