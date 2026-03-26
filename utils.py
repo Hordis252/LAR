@@ -5,11 +5,11 @@ from typing import Any, Tuple, Optional
 # --- Constants & Global Variables ---
 
 # Constants for GREEN ball
-#LOWER_GREEN = np.array([40, 70, 50])
-#UPPER_GREEN = np.array([90, 255, 255])
+LOWER_GREEN = np.array([40, 70, 50])
+UPPER_GREEN = np.array([90, 255, 255])
 
-LOWER_GREEN = np.array([50, 90, 90])
-UPPER_GREEN = np.array([80, 255, 255])
+#LOWER_GREEN = np.array([50, 90, 90])
+#UPPER_GREEN = np.array([80, 255, 255])
 
 # Camera parameters
 WIDTH = 640

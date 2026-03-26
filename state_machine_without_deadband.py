@@ -168,14 +168,6 @@ class StateMachine:
             angle += 2 * float(np.pi)
         return angle
 
-    def apply_deadband(self, value: float, min_threshold: float) -> float:
-        """Zajistí, že rychlost nebude v pásmu, kde se robot nehne, ale regulátor ji žádá."""
-        if value == 0:
-            return 0.0
-        if abs(value) < min_threshold:
-            return float(np.sign(value) * min_threshold)
-        return value
-
     def state_look(self) -> Tuple[float, float]:
         """LOOK:
         Keep the robot stationary. Useful for debugging camera and filters.
@@ -281,16 +273,15 @@ class StateMachine:
         yaw_error = self.normalize_angle(self.target_exit_yaw - yaw)
 
         # Pokud jsme natočeni přesně (odchylka menší než ~3 stupně)
-        if abs(yaw_error) < 0.08:
+        if abs(yaw_error) < 0.05:
             print("[ALIGN EXIT]")
             self.state = "LEAVE_GARAGE"
             self.turtle.reset_odometry()
             return 0.0, 0.0
 
         # P-regulátor pro plynulé dotočení
-        kp = 1.5
+        kp = 1.2
         angular_vel = float(np.clip(yaw_error * kp, -0.5, 0.5))
-        angular_vel = self.apply_deadband(angular_vel, 0.20)
         
         # Ochrana proti uvíznutí na tření při nízké rychlosti
         if 0 < angular_vel < 0.15: angular_vel = 0.15
@@ -338,20 +329,24 @@ class StateMachine:
             return 0.0, angular_vel
 
         # 2. Pokud cíl vidíme, vycentrujeme ho
-        # Odchylka od středu obrazovky (v pixelech)
-        error = (WIDTH / 2) - self.center_x
-        
-        # Pokud je cíl dostatečně blízko středu (tolerance např. 20 pixelů)
-        if abs(error) < 15:
-            print("[SEARCH] Cíl vycentrován! Přecházím na APPROACH.")
-            self.state = "APPROACH"
-            return 0.0, 0.0
-        
-        # Plynulé dotočení na střed pomocí P-regulátoru (stejný jako v APPROACH)
-        angular_vel = float(np.clip(self.kp_approach * error, -0.4, 0.4))
-        angular_vel = self.apply_deadband(angular_vel, 0.18)
+        else:
+            # Odchylka od středu obrazovky (v pixelech)
+            error = (WIDTH / 2) - self.center_x
             
-        return 0.0, angular_vel
+            # Pokud je cíl dostatečně blízko středu (tolerance např. 20 pixelů)
+            if abs(error) < 20:
+                print("[SEARCH] Cíl vycentrován! Přecházím na APPROACH.")
+                self.state = "APPROACH"
+                return 0.0, 0.0
+            
+            # Plynulé dotočení na střed pomocí P-regulátoru (stejný jako v APPROACH)
+            angular_vel = float(np.clip(self.kp_approach * error, -0.35, 0.35))
+            
+            # Ochrana proti uvíznutí na tření při velmi malé odchylce
+            if 0 < angular_vel < 0.15: angular_vel = 0.15
+            if 0 > angular_vel > -0.15: angular_vel = -0.15
+                
+            return 0.0, angular_vel
 
     def state_approach(self) -> Tuple[float, float]:
         """APPROACH:
@@ -412,8 +407,7 @@ class StateMachine:
             angle_error = self.normalize_angle(target_angle - yaw)
             
             # Rychlost natáčení směrem k bodu
-            #TODO: bylo angular_vel = float(np.clip(angle_error * 1.5, -0.4, 0.4))
-            angular_vel = float(np.clip(angle_error * 0.6, -0.4, 0.4))
+            angular_vel = float(np.clip(angle_error * 1.5, -0.4, 0.4))
             
             # Rychlost jízdy vpřed
             linear_vel = float(np.clip(distance_to_target * 0.5, 0.05, 0.15))
@@ -479,8 +473,7 @@ class StateMachine:
         kp = 1.5
         angular_vel = error * kp
 
-        #TODO: bylo angular_vel = float(np.clip(angular_vel, -0.8, -0.2))
-        angular_vel = float(np.clip(angular_vel, -0.3, -0.2))
+        angular_vel = float(np.clip(angular_vel, -0.8, -0.2))
 
         return 0.0, angular_vel
 

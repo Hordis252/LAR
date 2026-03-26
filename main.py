@@ -5,6 +5,8 @@ import numpy as np
 from state_machine import StateMachine
 from utils import *
 
+cameras = False
+
 def main() -> None:
     """Main execution loop for the Turtlebot.
 
@@ -26,8 +28,10 @@ def main() -> None:
     turtle.register_button_event_cb(button_callback)
 
     rate = Rate(10)
-    cv2.namedWindow("Kamera")
-    cv2.namedWindow("Maska")
+    
+    if cameras == True:
+        cv2.namedWindow("Kamera")
+        cv2.namedWindow("Maska")
     
     # --- Main Control Loop ---
     while not turtle.is_shutting_down() and not state_machine.crash_detected and not state_machine.is_finished:
@@ -72,9 +76,10 @@ def main() -> None:
                     im_work, pc, num_labels, labels, stats
                 )
 
-            cv2.imshow("Maska", mask)
-            cv2.imshow("Kamera", im_work)
-            cv2.waitKey(1)
+            if cameras == True:
+                cv2.imshow("Maska", mask)
+                cv2.imshow("Kamera", im_work)
+                cv2.waitKey(1)
 
         # --- PointCloud Processing ---
         if state_machine.use_pointcloud and pc is not None:
