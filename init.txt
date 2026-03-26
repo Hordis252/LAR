@@ -1,0 +1,5 @@
+ssh -X prokema4@turtle11
+
+mount /local
+singularity shell /local/robolab_noetic_amd64.simg
+source /opt/ros/lar/setup.bash

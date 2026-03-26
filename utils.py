@@ -8,7 +8,7 @@ from typing import Any, Tuple, Optional
 #LOWER_GREEN = np.array([40, 70, 50])
 #UPPER_GREEN = np.array([90, 255, 255])
 
-LOWER_GREEN = np.array([50, 90, 90])
+LOWER_GREEN = np.array([30, 40, 30])
 UPPER_GREEN = np.array([80, 255, 255])
 
 # Camera parameters
@@ -46,14 +46,17 @@ def filter_image(im: np.ndarray, target_object: str) -> Tuple[np.ndarray, np.nda
     Returns:
         Tuple[np.ndarray, np.ndarray]: The binary mask and the modified image.
     """
-    # Crop out the top 100 pixels to remove background interference
     im[0:100, :] = 0
-    
     hsv = cv2.cvtColor(im, cv2.COLOR_BGR2HSV)
-
     mask = cv2.inRange(hsv, LOWER_GREEN, UPPER_GREEN)
-        
+
+    # Nové: odstraní šum a zaplní díry od odlesků
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (9, 9))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN,  kernel)  # odstraní šum
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  # zaplní díry
+
     return mask, im
+
 
 def get_target_position(
     im: np.ndarray, pc: Optional[np.ndarray], num_labels: int, 
