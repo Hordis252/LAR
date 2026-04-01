@@ -8,8 +8,8 @@ from typing import Any, Tuple, Optional
 #LOWER_GREEN = np.array([40, 70, 50])
 #UPPER_GREEN = np.array([90, 255, 255])
 
-LOWER_GREEN = np.array([30, 40, 30])
-UPPER_GREEN = np.array([80, 255, 255])
+LOWER_GREEN = np.array([30, 70, 50])
+UPPER_GREEN = np.array([90, 255, 255])
 
 # Camera parameters
 WIDTH = 640
@@ -57,7 +57,6 @@ def filter_image(im: np.ndarray, target_object: str) -> Tuple[np.ndarray, np.nda
 
     return mask, im
 
-
 def get_target_position(
     im: np.ndarray, pc: Optional[np.ndarray], num_labels: int, 
     labels: np.ndarray, stats: np.ndarray
@@ -99,7 +98,7 @@ def get_target_position(
                 max_area = area
                 largest_idx = i
         
-        if max_area > 200 and largest_idx != -1:
+        if max_area > 150 and largest_idx != -1:
             component_mask = (labels == largest_idx).astype(np.uint8)
             contours, _ = cv2.findContours(component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             
