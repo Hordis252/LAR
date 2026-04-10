@@ -119,10 +119,10 @@ def get_target_position(
 
             # Calculate distance using pointcloud data if available
             if pc is not None:
-                y_min = max(0, best_center_y_pos - 2)
-                y_max = min(480, best_center_y_pos + 3)
-                x_min = max(0, best_center_x - 2)
-                x_max = min(640, best_center_x + 3)
+                y_min = max(0, best_center_y_pos - 3)
+                y_max = min(480, best_center_y_pos + 2)
+                x_min = max(0, best_center_x - 3)
+                x_max = min(640, best_center_x + 2)
                 z_window = pc[y_min:y_max, x_min:x_max, 2]
                 
                 z_valid_numbers = z_window[~np.isnan(z_window)]
