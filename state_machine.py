@@ -220,7 +220,9 @@ class StateMachine:
         dyaw = self.normalize_angle(yaw - self.last_scan_yaw)
         self.scan_accumulated_yaw += dyaw
         self.last_scan_yaw = yaw
-        self.scan_data.append((yaw, self.obstacle_dist))
+
+        if dyaw > 0.01:
+            self.scan_data.append((yaw, self.obstacle_dist))
 
         if self.target_detected:
             pixel_error = abs((WIDTH / 2) - self.center_x)
